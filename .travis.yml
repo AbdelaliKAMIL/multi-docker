@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t akamil/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true akamil/react-test npm test
+
+after_success:
+    - docker build -t akamil/multi-client ./client
+    - docker build -t akamil/multi-nginx ./nginx
+    - docker build -t akamil/multi-server ./server
+    - docker build -t akamil/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push akamil/multi-client
+    - docker push akamil/multi-nginx
+    - docker push akamil/multi-server
+    - docker push akamil/multi-worker
